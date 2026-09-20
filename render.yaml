@@ -31,7 +31,6 @@ services:
   - type: web
     name: cf-stalker-frontend
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
