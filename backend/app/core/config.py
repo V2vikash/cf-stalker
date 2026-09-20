@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 import json
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "cf_stalker"
-    DATABASE_URL: Union[str, None] = None
+    DATABASE_URL: Optional[str] = None
 
     @property
     def sync_database_url(self) -> str:
@@ -61,10 +61,8 @@ class Settings(BaseSettings):
             return url
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
-    # Redis & Celery
-    REDIS_URL: str = "redis://localhost:6379/0"
-    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
+    # Cache / Redis
+    REDIS_URL: Optional[str] = "redis://localhost:6379/0"
 
     # Codeforces API
     CF_API_BASE_URL: str = "https://codeforces.com/api"

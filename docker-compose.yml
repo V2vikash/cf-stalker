@@ -49,8 +49,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-cf_stalker}
       - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
       - LLM_API_KEY=${LLM_API_KEY:-mock-key}
@@ -66,47 +64,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-
-  celery_worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: cf_stalker_celery_worker
-    restart: always
-    command: celery -A app.core.celery_app.celery_app worker --loglevel=info -c 4
-    environment:
-      - POSTGRES_SERVER=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-cf_stalker}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-
-  celery_beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: cf_stalker_celery_beat
-    restart: always
-    command: celery -A app.core.celery_app.celery_app beat --loglevel=info
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
-    depends_on:
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
 
   frontend:
     build:

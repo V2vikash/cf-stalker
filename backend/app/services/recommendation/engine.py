@@ -1,12 +1,13 @@
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.db.models.cf_profile import CFProfile
 from app.db.models.problem import Problem, ProblemTag
 from app.db.models.submission import Submission
 from app.db.models.analytics import UserSkillGap
 from app.schemas.recommendation import RecommendationResponse, RecommendedProblemItem
+from app.tasks.sync_problems import sync_problem_archive_task
 
 
 class RecommendationEngine:
@@ -48,10 +49,21 @@ class RecommendationEngine:
                 Problem.id.notin_(solved_ids) if solved_ids else True,
             )
             .order_by(Problem.contest_id.desc())
-            .limit( limit * 3 )
+            .limit(limit * 3)
         )
         p_res = await self.db.execute(p_stmt)
         candidate_problems = p_res.scalars().all()
+
+        # Self-healing: If no candidate problems are found in database, check total problems
+        if not candidate_problems:
+            total_prob_stmt = select(func.count(Problem.id))
+            prob_count_res = await self.db.execute(total_prob_stmt)
+            total_problems = prob_count_res.scalar_one_or_none() or 0
+
+            if total_problems == 0:
+                await sync_problem_archive_task()
+                p_res = await self.db.execute(p_stmt)
+                candidate_problems = p_res.scalars().all()
 
         recommendations: List[RecommendedProblemItem] = []
 

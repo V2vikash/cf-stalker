@@ -1,13 +1,14 @@
 # ==============================================================================
-# CF STALKER — RENDER BLUEPRINT DEPLOYMENT SPECIFICATION
-# Official 6-Component Architecture Specification for Render.com
+# CF STALKER — RENDER BLUEPRINT DEPLOYMENT SPECIFICATION (ZERO PAID SERVICES)
+# Official 3-Component Architecture Specification for Render.com Free Tier
 # ==============================================================================
 
 services:
-  # 1. FastAPI Backend Web Service
+  # 1. FastAPI Backend Web Service (Free Tier)
   - type: web
     name: cf-stalker-backend
     runtime: python
+    plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -24,77 +25,14 @@ services:
         fromDatabase:
           name: cf-stalker-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
       - key: ALLOWED_ORIGINS
         value: https://cf-stalker-frontend.onrender.com
 
-  # 2. Celery Worker (Background Ingestion Engine)
-  - type: worker
-    name: cf-stalker-celery-worker
-    runtime: python
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: celery -A app.core.celery_app.celery_app worker --loglevel=info -c 4
-    envVars:
-      - key: ENVIRONMENT
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: cf-stalker-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
-
-  # 3. Celery Beat (Periodic Task Scheduler)
-  - type: worker
-    name: cf-stalker-celery-beat
-    runtime: python
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: celery -A app.core.celery_app.celery_app beat --loglevel=info
-    envVars:
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: cf-stalker-redis
-          property: connectionString
-
-  # 4. React Frontend (Static Web Site)
+  # 2. React Frontend Static Site (Free Tier)
   - type: web
     name: cf-stalker-frontend
     runtime: static
+    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
@@ -106,13 +44,9 @@ services:
       - key: VITE_API_BASE_URL
         value: https://cf-stalker-backend.onrender.com/api/v1
 
-  # 5. Managed Redis Instance
-  - type: redis
-    name: cf-stalker-redis
-    ipAllowList: []
-
 databases:
-  # 6. Managed PostgreSQL Database
+  # 3. Managed PostgreSQL Database (Free Tier)
   - name: cf-stalker-db
     databaseName: cf_stalker
     user: cf_stalker_user
+    plan: free
