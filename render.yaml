@@ -10,8 +10,8 @@ services:
     runtime: python
     plan: free
     rootDir: backend
-    buildCommand: pip install -r requirements.txt && alembic upgrade head
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:
       - key: ENVIRONMENT
@@ -22,7 +22,7 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: cf-stalker-db
+          name: job-intelligence-platform-db
           property: connectionString
       - key: ALLOWED_ORIGINS
         value: https://cf-stalker-frontend.onrender.com
@@ -41,10 +41,3 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://cf-stalker-backend.onrender.com/api/v1
-
-databases:
-  # 3. Managed PostgreSQL Database (Free Tier)
-  - name: cf-stalker-db
-    databaseName: cf_stalker
-    user: cf_stalker_user
-    plan: free
